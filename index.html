@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Page Title</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script type="text/javascript" src="jsencrypt_3.0.0-rc.1.js"></script>
+  <script type="text/javascript" src="jsrsasign-all-min.js"></script>
+</head>
+
+<body>
+
+  <button id="getKeys">Get Keys</button>
+
+  <div class="flex">
+    <label id="label-1885872629-1" for="textarea-1885872629-1">Public key</label>
+  </div>
+
+  <div class="flex">
+    <textarea id="pubKey" value="" cols="100" rows="4"></textarea>
+  </div>
+
+  <div class="flex">
+    <label id="label-1885872629-2" for="textarea-1885872629-2">Private key</label>
+  </div>
+
+  <div class="flex">
+    <textarea id="privKey" value="" cols="100" rows="4"></textarea>
+  </div>
+
+  <br>
+  <br>
+  <br>
+  <br>
+
+  <div class="flex">
+    <div class="flex-item sm-12 md-12">
+      <button id="Encrypt_With_PublicKey">Encrypt With PublicKey</button>
+      <button id="Encrypt_With_PrivateKey">Encrypt With PrivateKey</button>
+    </div>
+  </div>
+
+  <div class="flex">
+    <label id="label-1885872629-3" for="textarea-1885872629-3">Text</label>
+  </div>
+
+  <div class="flex">
+    <textarea id="text" cols="100" rows="4" value="Hello world"></textarea>
+  </div>
+
+
+  <br>
+  <br>
+  <br>
+  <br>
+  <div class="flex">
+    <div class="flex-item sm-12 md-12">
+      <button id="Decrypt_With_PrivateKey">Decrypt With PrivateKey</button>
+      <button id="Decrypt_With_PublicKey">Decrypt With PublicKey</button>
+    </div>
+  </div>
+  <div class="flex">
+    <label id="label-1885872629-4" for="textarea-1885872629-4">Crypted Text</label>
+  </div>
+
+  <div class="flex">
+    <textarea id="text-enc" cols="100" rows="4" value=""></textarea>
+  </div>
+
+
+  <script type="text/javascript">
+    $(function () {
+
+
+      $("#getKeys").click(function () {
+        generateKeys();
+      });
+
+      $("#Encrypt_With_PublicKey").click(function () {
+        encrypt();
+      });
+      $("#Decrypt_With_PrivateKey").click(function () {
+        decrypt();
+      });
+      $("#Encrypt_With_PrivateKey").click(function () {
+        encryptWithPrivateKey();
+      });
+      $("#Decrypt_With_PublicKey").click(function () {
+        decryptWightPublicKey();
+      });
+
+
+
+
+      /***********************************/
+
+      function generateKeys() {
+
+        var keyPair = KEYUTIL.generateKeypair("RSA", 512);//[512, 1024, 2048]
+        keyPair.prvKeyObj.isPrivate = true;
+        keyPair.pubKeyObj.isPrivate = false;
+
+        var privateKey = KEYUTIL.getPEM(keyPair.prvKeyObj, "PKCS1PRV");
+        var publicKey = KEYUTIL.getPEM(keyPair.pubKeyObj);
+
+        $("#pubKey").val(publicKey);
+        $("#privKey").val(privateKey);
+      }
+
+
+      function encrypt() {
+        var publicKey = $("#pubKey").val();
+        var text = $("#text").val();
+
+
+        let keyObj = KEYUTIL.getKey(publicKey);
+        let encrypted = KJUR.crypto.Cipher.encrypt(text, keyObj);
+
+        $("#text-enc").val(encrypted);
+      };
+
+      function decrypt() {
+        var privateKey = $("#privKey").val();
+        var cryptedText = $("#text-enc").val();
+
+        let keyObj = KEYUTIL.getKey(privateKey);
+        let decrypted = KJUR.crypto.Cipher.decrypt(cryptedText, keyObj);
+
+        $("#text").val(decrypted);
+      };
+
+      function encryptWithPrivateKey() {
+        var privateKey = $("#privKey").val();
+        var text = $("#text").val();
+
+
+        var sig = new KJUR.crypto.Signature({ "alg": "SHA1withRSA" });
+        sig.init(privateKey);
+        sig.updateString(text);
+        var sigValueHex = sig.sign();
+
+        console.log("sigValueHex", sigValueHex);
+        $("#text-enc").val(sigValueHex);
+      };
+
+      function decryptWightPublicKey() {
+        var publicKey = $("#pubKey").val();
+        var cryptedText = $("#text-enc").val();
+        var text = $("#text").val();
+
+
+        var sig2 = new KJUR.crypto.Signature({ "alg": "SHA1withRSA" });
+        sig2.init(publicKey);
+        sig2.updateString(text);
+        var isValid = sig2.verify(cryptedText);
+
+        console.log("isValid", isValid);
+        $("#text").val(isValid);
+      };
+
+
+    });
+  </script>
+</body>
+
+</html>
